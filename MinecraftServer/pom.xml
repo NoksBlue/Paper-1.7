@@ -19,7 +19,7 @@
     <repositories>
         <repository>
             <id>repobo-snap</id>
-            <url>http://repo.bukkit.org/content/groups/public</url>
+            <url>http://repo.mikeprimm.com</url>
         </repository>
     </repositories>
 
