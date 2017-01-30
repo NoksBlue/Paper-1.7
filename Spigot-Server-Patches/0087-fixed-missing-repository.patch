@@ -1,0 +1,30 @@
+From 87329633ae544a4ad0dbcb4b80c3b76d6bb5fe7e Mon Sep 17 00:00:00 2001
+From: Pauls Exe <paulsexe@users.noreply.github.com>
+Date: Mon, 30 Jan 2017 15:02:47 +1100
+Subject: [PATCH] fixed missing repository
+
+
+diff --git a/pom.xml b/pom.xml
+index 34cbf19..9fdcd27 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -28,14 +28,14 @@
+   <repositories>
+     <repository>
+       <id>repobo-snap</id>
+-      <url>http://repo.bukkit.org/content/groups/public</url>
++      <url>http://repo.caseif.net/content/groups/public</url>
+     </repository>
+   </repositories>
+ 
+   <pluginRepositories>
+     <pluginRepository>
+       <id>bukkit-plugins</id>
+-      <url>http://repo.bukkit.org/content/groups/public</url>
++      <url>http://repo.caseif.net/content/groups/public</url>
+     </pluginRepository>
+   </pluginRepositories>
+ 
+-- 
+2.1.4
+
