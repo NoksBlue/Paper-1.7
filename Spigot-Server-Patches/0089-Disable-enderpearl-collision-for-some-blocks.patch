@@ -1,0 +1,45 @@
+From 4c2de7a9bfa5ee6dcc29a6e9fee25b996de66e58 Mon Sep 17 00:00:00 2001
+From: LeftPathLane <paulsexecutables@gmail.com>
+Date: Sat, 4 Aug 2018 15:29:37 +1000
+Subject: [PATCH] Disable enderpearl collision for some blocks
+
+
+diff --git a/src/main/java/net/minecraft/server/EntityProjectile.java b/src/main/java/net/minecraft/server/EntityProjectile.java
+index 73f52acc..af8c5881 100644
+--- a/src/main/java/net/minecraft/server/EntityProjectile.java
++++ b/src/main/java/net/minecraft/server/EntityProjectile.java
+@@ -156,7 +156,16 @@ public abstract class EntityProjectile extends Entity implements IProjectile {
+         }
+         // PaperSpigot end
+ 
+-        if (movingobjectposition != null) {
++        collide: if (movingobjectposition != null) {
++            if (this instanceof EntityEnderPearl && world.paperSpigotConfig.enderpearlCollision) {
++                Block thisBlock = this.world.getType(movingobjectposition.b, movingobjectposition.c, movingobjectposition.d);
++                if (thisBlock == Blocks.FENCE_GATE) {
++                    if (BlockFenceGate.b(this.world.getData(movingobjectposition.b, movingobjectposition.c, movingobjectposition.d)))
++                        break collide;
++                } else if (thisBlock == Blocks.WEB || thisBlock == Blocks.TRIPWIRE) {
++                    break collide;
++                }
++            }
+             if (movingobjectposition.type == EnumMovingObjectType.BLOCK && this.world.getType(movingobjectposition.b, movingobjectposition.c, movingobjectposition.d) == Blocks.PORTAL) {
+                 this.ah();
+             } else {
+diff --git a/src/main/java/org/github/paperspigot/PaperSpigotWorldConfig.java b/src/main/java/org/github/paperspigot/PaperSpigotWorldConfig.java
+index 309a67e4..20f88c20 100644
+--- a/src/main/java/org/github/paperspigot/PaperSpigotWorldConfig.java
++++ b/src/main/java/org/github/paperspigot/PaperSpigotWorldConfig.java
+@@ -335,4 +335,9 @@ public class PaperSpigotWorldConfig
+     {
+         tntExplosionVolume = getFloat( "tnt-explosion-volume", 4.0F );
+     }
++
++    public boolean enderpearlCollision;
++    private void enderpearlCollision() {
++        enderpearlCollision = getBoolean("enderpearl-hcf-collisions", false);
++    }
+ }
+-- 
+2.14.1.windows.1
+
