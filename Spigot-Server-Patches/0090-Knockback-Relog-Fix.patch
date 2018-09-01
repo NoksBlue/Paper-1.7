@@ -89,12 +89,13 @@ index 9384cbe..5067399 100644
          // Spigot end
      }
  
-+    @Override
-+    public void setVelocity(org.bukkit.util.Vector velocity) {
-+        // Send the new velocity to the player's client immediately, so it isn't affected by
-+        // any movement packets from this player that may be processed before the end of the tick.
-+        // Without this, player velocity changes tend to be very inconsistent.
-+        super.setVelocity(velocity);
++    public void setVelocityDirect(org.bukkit.util.Vector vel) {
++        entity.motX = vel.getX();
++        entity.motY = vel.getY();
++        entity.motZ = vel.getZ();
++        if (entity.motY > 0) {
++            entity.fallDistance = 0.0f;
++        }
 +    }
 +
      // Spigot start
