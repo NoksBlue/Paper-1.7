@@ -1,0 +1,27 @@
+From 977f9ee1ba6e142c4b19193e13eb49ca2b934579 Mon Sep 17 00:00:00 2001
+From: Michael Himing <mhiming@gmail.com>
+Date: Fri, 3 Aug 2018 22:42:37 +1000
+Subject: [PATCH] Fix moved too quickly check
+
+
+diff --git a/src/main/java/net/minecraft/server/PlayerConnection.java b/src/main/java/net/minecraft/server/PlayerConnection.java
+index b7949ac25..de8237208 100644
+--- a/src/main/java/net/minecraft/server/PlayerConnection.java
++++ b/src/main/java/net/minecraft/server/PlayerConnection.java
+@@ -875,9 +875,11 @@ public class PlayerConnection implements PacketListenerPlayIn, ITickable {
+                         double d6 = packetplayinflying.c(this.player.locZ);
+                         float f = packetplayinflying.a(this.player.yaw);
+                         float f1 = packetplayinflying.b(this.player.pitch);
+-                        double d7 = d4 - this.l;
+-                        double d8 = d5 - this.m;
+-                        double d9 = d6 - this.n;
++                        // Purple start
++                        double d7 = d4 - d0;
++                        double d8 = d5 - d1;
++                        double d9 = d6 - d2;
++                        // Purple end
+                         double d10 = this.player.motX * this.player.motX + this.player.motY * this.player.motY + this.player.motZ * this.player.motZ;
+                         double d11 = d7 * d7 + d8 * d8 + d9 * d9;
+ 
+-- 
+2.18.0.windows.1
