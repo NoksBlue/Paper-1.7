@@ -28,7 +28,6 @@ index 1a8e5dc..afa674f 100644
  import org.bukkit.event.player.PlayerBedLeaveEvent;
  import org.bukkit.event.player.PlayerDropItemEvent;
  import org.bukkit.event.player.PlayerItemConsumeEvent;
-+import org.bukkit.event.player.PlayerVelocityEvent;
 +import org.spigotmc.ProtocolData;
 +
 +import java.util.Collection;
@@ -71,13 +70,7 @@ index 1a8e5dc..afa674f 100644
 +                        // things, doesn't affect server velocity at all.
 +                        if (entity instanceof EntityPlayer && entity.velocityChanged) {
 +                            EntityPlayer attackedPlayer = (EntityPlayer) entity;
-+
-+                            PlayerVelocityEvent event = new PlayerVelocityEvent(attackedPlayer, attackedPlayer.getVelocity());
-+                            this.world.getPluginManager().callEvent(event);
-+                            if (!event.isCancelled()) {
-+                                attackedPlayer.setVelocity(event.getVelocity());
-+                                attackedPlayer.playerConnection.sendPacket(new PacketPlayOutEntityVelocity(attackedPlayer));
-+                            }
++                            attackedPlayer.playerConnection.sendPacket(new PacketPlayOutEntityVelocity(attackedPlayer));
 +                            attackedPlayer.velocityChanged = false;
 +                            attackedPlayer.motX = victimMotX;
 +                            attackedPlayer.motY = victimMotY;
