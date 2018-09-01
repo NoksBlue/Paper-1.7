@@ -63,7 +63,7 @@ index 4621d1e2..33fcb1e8 100644
                          }
  
 -                        // CraftBukkit start
-+                        // LifeSpigot start
++                        // NoksioSpigot start
                          // If the attack caused knockback, send the new velocity to the victim's client immediately,
                          // and undo the change. Otherwise, if movement packets from the victim are processed before
                          // the end of the tick, then friction may reduce the velocity considerably before it's sent
@@ -74,9 +74,9 @@ index 4621d1e2..33fcb1e8 100644
 -                            attackedPlayer.playerConnection.sendPacket(new PacketPlayOutEntityVelocity(attackedPlayer));
 +
 +                            PlayerVelocityEvent event = new PlayerVelocityEvent(attackedPlayer.getBukkitEntity(), attackedPlayer.getBukkitEntity().getVelocity());
-+                       	    this.world.getServer().getPluginManager().callEvent(event);
++                            this.world.getServer().getPluginManager().callEvent(event);
 +                            if(!event.isCancelled()){
-+                                attackedPlayer.getBukkitEntity().setVelocity(event.getVelocity());
++                                attackedPlayer.getBukkitEntity().setVelocityDirect(event.getVelocity());
 +                                attackedPlayer.playerConnection.sendPacket(new PacketPlayOutEntityVelocity(attackedPlayer));
 +                            }
                              attackedPlayer.velocityChanged = false;
@@ -85,7 +85,7 @@ index 4621d1e2..33fcb1e8 100644
                              attackedPlayer.motZ = victimMotZ;
                          }
 -                        // CraftBukkit end
-+                        // LifeSpigot end
++                        // NoksioSpigot end
  
                          if (flag) {
                              this.b(entity);
