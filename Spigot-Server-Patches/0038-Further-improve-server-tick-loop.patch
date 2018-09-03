@@ -112,17 +112,17 @@ index fa10ea1..d687498 100644
 +                    if (wait > 0) {
 +                        if (catchupTime < 2E6) {
 +                            wait += Math.abs(catchupTime);
-+                        }
-+                        if (wait < catchupTime) {
++                        } else if (wait < catchupTime) {
 +                            catchupTime -= wait;
 +                            wait = 0;
-+                        } else if (catchupTime > 2E6) {
++                        } else {
 +                            wait -= catchupTime;
-+                            catchupTime -= catchupTime;
++                            catchupTime = 0;
 +                        }
 +                    }
                      if (wait > 0) {
                          Thread.sleep(wait / 1000000);
++                        curTime = System.nanoTime();
 -                        catchupTime = 0;
 -                        continue;
 -                    } else {
