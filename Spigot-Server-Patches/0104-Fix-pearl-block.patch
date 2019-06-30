@@ -1,0 +1,96 @@
+From dca415d5ba68bf1ce5c22f2151fdb5b6034bfb36 Mon Sep 17 00:00:00 2001
+From: Noksio <noksiopro@gmail.com>
+Date: Sun, 30 Jun 2019 13:11:19 -0400
+Subject: [PATCH] Fix pearl block
+
+
+diff --git a/src/main/java/net/minecraft/server/EntityEnderPearl.java b/src/main/java/net/minecraft/server/EntityEnderPearl.java
+index 718a63e7..db377ea5 100644
+--- a/src/main/java/net/minecraft/server/EntityEnderPearl.java
++++ b/src/main/java/net/minecraft/server/EntityEnderPearl.java
+@@ -2,11 +2,18 @@ package net.minecraft.server;
+ 
+ // CraftBukkit start
+ import org.bukkit.Bukkit;
++import org.bukkit.Location;
++import org.bukkit.craftbukkit.entity.CraftEnderPearl;
++import org.bukkit.craftbukkit.entity.CraftEntity;
++import org.bukkit.craftbukkit.entity.CraftPlayer;
+ import org.bukkit.craftbukkit.event.CraftEventFactory;
++import org.bukkit.event.entity.EnderpearlLandEvent;
+ import org.bukkit.event.player.PlayerTeleportEvent;
++import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+ // CraftBukkit end
+ 
+ public class EntityEnderPearl extends EntityProjectile {
++	private Location lastValidTeleport; // Rinny - antipearl glitch
+ 
+     public EntityEnderPearl(World world) {
+         super(world);
+@@ -17,6 +24,15 @@ public class EntityEnderPearl extends EntityProjectile {
+         super(world, entityliving);
+         this.loadChunks = world.paperSpigotConfig.loadUnloadedEnderPearls; // PaperSpigot
+     }
++    
++	// Rinny start - antipearl glitch
++	public void h() {
++		if (this.world.getCubes(this, this.boundingBox.grow(0.25D, 0.25D, 0.25D)).isEmpty()) {
++			this.lastValidTeleport = getBukkitEntity().getLocation();
++		}
++		super.h();
++	}
++	// Rinny end
+ 
+     protected void a(MovingObjectPosition movingobjectposition) {
+         if (movingobjectposition.entity != null) {
+@@ -39,29 +55,39 @@ public class EntityEnderPearl extends EntityProjectile {
+ 
+                 if (entityplayer.playerConnection.b().isConnected() && entityplayer.world == this.world) {
+                     // CraftBukkit start - Fire PlayerTeleportEvent
+-                    org.bukkit.craftbukkit.entity.CraftPlayer player = entityplayer.getBukkitEntity();
+-                    org.bukkit.Location location = getBukkitEntity().getLocation();
++                    CraftPlayer player = entityplayer.getBukkitEntity();
++                    
++                    EnderpearlLandEvent.Reason reason = movingobjectposition.entity != null ? EnderpearlLandEvent.Reason.ENTITY : EnderpearlLandEvent.Reason.BLOCK;
++                    CraftEntity bukkitHitEntity = movingobjectposition.entity != null ? movingobjectposition.entity.getBukkitEntity() : null;
++                    EnderpearlLandEvent landEvent = new EnderpearlLandEvent((CraftEnderPearl) getBukkitEntity(), reason, bukkitHitEntity, 5.0F);
++                    Bukkit.getPluginManager().callEvent(landEvent);
++                    
++                    if (landEvent.isCancelled()) {
++                    	this.die();
++                    	return;
++                    }
++                    
++                    Location location = this.lastValidTeleport.clone(); // Rinny - antipearl glitch
+                     location.setPitch(player.getLocation().getPitch());
+                     location.setYaw(player.getLocation().getYaw());
+ 
+-                    PlayerTeleportEvent teleEvent = new PlayerTeleportEvent(player, player.getLocation(), location, PlayerTeleportEvent.TeleportCause.ENDER_PEARL);
++                    PlayerTeleportEvent teleEvent = new PlayerTeleportEvent(player, player.getLocation(), location, TeleportCause.ENDER_PEARL);
+                     Bukkit.getPluginManager().callEvent(teleEvent);
+ 
+                     if (!teleEvent.isCancelled() && !entityplayer.playerConnection.isDisconnected()) {
+-                        if (this.getShooter().am()) {
+-                            this.getShooter().mount((Entity) null);
++                        if (entityplayer.am()) {
++                        	entityplayer.mount((Entity) null);
+                         }
+ 
+                         entityplayer.playerConnection.teleport(teleEvent.getTo());
+-                        this.getShooter().fallDistance = 0.0F;
++                        entityplayer.fallDistance = 0.0F;
+                         CraftEventFactory.entityDamage = this;
+-                        this.getShooter().damageEntity(DamageSource.FALL, 5.0F);
++                        entityplayer.damageEntity(DamageSource.FALL, landEvent.getDamage());
+                         CraftEventFactory.entityDamage = null;
+                     }
+                     // CraftBukkit end
+                 }
+             }
+-
+             this.die();
+         }
+     }
+-- 
+2.19.1.windows.1
+
