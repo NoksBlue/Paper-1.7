@@ -138,14 +138,6 @@ index 01500971..f283fa02 100644
                  Location curPos = player.getLocation();
                  lastPosX = curPos.getX();
                  lastPosY = curPos.getY();
-@@ -220,6 +223,7 @@ public class PlayerConnection implements PacketPlayInListener {
-             // Spigot End
-             Location from = new Location(player.getWorld(), lastPosX, lastPosY, lastPosZ, lastYaw, lastPitch); // Get the Players previous Event location.
-             Location to = player.getLocation().clone(); // Start off the To location as the Players current location.
-+            boolean wasOnGround = this.player.onGround;
- 
-             // If the packet contains movement information then we update the To location with the correct XYZ.
-             if (packetplayinflying.hasPos && !(packetplayinflying.hasPos && packetplayinflying.y == -999.0D && packetplayinflying.stance == -999.0D)) {
 @@ -233,48 +237,51 @@ public class PlayerConnection implements PacketPlayInListener {
                  to.setYaw(packetplayinflying.yaw);
                  to.setPitch(packetplayinflying.pitch);
@@ -316,19 +308,6 @@ index 01500971..f283fa02 100644
                              this.disconnect("Flying is not enabled on this server");
                              return;
                          }
-@@ -434,6 +468,12 @@ public class PlayerConnection implements PacketPlayInListener {
- 
-                 this.player.onGround = packetplayinflying.i();
-                 this.minecraftServer.getPlayerList().d(this.player);
-+                // SportBukkit start
-+                if(wasOnGround != this.player.onGround) {
-+                	PlayerOnGroundEvent onGroundEvent = new PlayerOnGroundEvent(player, this.player.onGround);
-+                	this.server.getPluginManager().callEvent(onGroundEvent);
-+                }
-+                // SportBukkit end
-                 this.player.b(this.player.locY - d0, packetplayinflying.i());
-             } else if (this.e % 20 == 0) {
-                 this.a(this.y, this.z, this.q, this.player.yaw, this.player.pitch);
 @@ -466,13 +506,8 @@ public class PlayerConnection implements PacketPlayInListener {
          f1 = dest.getPitch();
  
@@ -502,42 +481,6 @@ index 01500971..f283fa02 100644
                          items.b++;
                      }
                  }
-@@ -788,11 +799,34 @@ public class PlayerConnection implements PacketPlayInListener {
-             if (enumchatvisibility == EnumChatVisibility.HIDDEN) {
-                 return;
-             }
--
-             if (enumchatvisibility == EnumChatVisibility.SYSTEM && !packetplayoutchat.d()) {
-                 return;
-             }
-         }
-+        
-+        if (packet instanceof PacketPlayOutEntityMetadata) {
-+        	if (getPlayer().canSeeInvisibles()) {
-+        		PacketPlayOutEntityMetadata metadataPacket = (PacketPlayOutEntityMetadata)packet;
-+        		Object entity = this.player.world.getEntity(metadataPacket.a);
-+        		if (entity instanceof EntityLiving) {
-+        			for (int i = 0; i < metadataPacket.b.size(); i++) {
-+        				WatchableObject wo = (WatchableObject)metadataPacket.b.get(i);
-+        				if (wo.a() == 0 && wo.b() instanceof Byte) {
-+        					byte entityFlags = ((Byte)wo.b()).byteValue();
-+        					if ((entityFlags & 0x20) == 0) {
-+        						break;
-+        					}
-+        					PacketPlayOutEntityMetadata replacedMetadataPacket = new PacketPlayOutEntityMetadata();
-+        					replacedMetadataPacket.a = metadataPacket.a;
-+        					replacedMetadataPacket.b = new ArrayList(metadataPacket.b);
-+        					replacedMetadataPacket.b.set(i, new WatchableObject(wo.c(), wo.a(), Byte.valueOf((byte)(entityFlags & 0xFFFFFFDF))));
-+        					packet = replacedMetadataPacket;
-+        					break;
-+        				}
-+        			}
-+        		}
-+        	}
-+        }
- 
-         // CraftBukkit start
-         if (packet == null) {
 @@ -804,12 +838,12 @@ public class PlayerConnection implements PacketPlayInListener {
          // CraftBukkit end
  
@@ -562,24 +505,6 @@ index 01500971..f283fa02 100644
              this.disconnect("Invalid hotbar selection (Hacking?)"); // CraftBukkit //Spigot "Nope" -> Descriptive reason
          }
      }
-@@ -851,7 +885,7 @@ public class PlayerConnection implements PacketPlayInListener {
-             for (int i = 0; i < s.length(); ++i) {
-                 if (!SharedConstants.isAllowedChatCharacter(s.charAt(i))) {
-                     // CraftBukkit start - threadsafety
--                    if (packetplayinchat.a()) {
-+                    if (packetplayinchat.async()) {
-                         Waitable waitable = new Waitable() {
-                             @Override
-                             protected Object evaluate() {
-@@ -878,7 +912,7 @@ public class PlayerConnection implements PacketPlayInListener {
-             }
- 
-             // CraftBukkit start
--            if (!packetplayinchat.a()) {
-+            if (!packetplayinchat.async()) {
-                 try {
-                     this.minecraftServer.server.playerCommandState = true;
-                     this.handleCommand(s);
 @@ -886,15 +920,13 @@ public class PlayerConnection implements PacketPlayInListener {
                      this.minecraftServer.server.playerCommandState = false;
                  }
@@ -618,29 +543,6 @@ index 01500971..f283fa02 100644
                      counted = false;
                      break;
                  }
-@@ -927,11 +956,11 @@ public class PlayerConnection implements PacketPlayInListener {
-             // CraftBukkit start - replaced with thread safe throttle
-             // this.chatThrottle += 20;
-             if (counted && chatSpamField.addAndGet(this, 20) > 200 && !this.minecraftServer.getPlayerList().isOp(this.player.getProfile())) {
--                if (packetplayinchat.a()) {
-+                if (packetplayinchat.async()) {
-                     Waitable waitable = new Waitable() {
-                         @Override
-                         protected Object evaluate() {
--                            PlayerConnection.this.disconnect("disconnect.spam");
-+                            PlayerConnection.this.disconnect(RinnyConfig.kickSpamMessage);
-                             return null;
-                         }
-                     };
-@@ -946,7 +975,7 @@ public class PlayerConnection implements PacketPlayInListener {
-                         throw new RuntimeException(e);
-                     }
-                 } else {
--                    this.disconnect("disconnect.spam");
-+                    this.disconnect(RinnyConfig.kickSpamMessage);
-                 }
-                 // CraftBukkit end
-             }
 @@ -960,6 +989,29 @@ public class PlayerConnection implements PacketPlayInListener {
          }
  
@@ -778,19 +680,6 @@ index 01500971..f283fa02 100644
              return;
          }
          // Spigot End
-@@ -1204,7 +1304,11 @@ public class PlayerConnection implements PacketPlayInListener {
-                         this.minecraftServer.warning("Player " + this.player.getName() + " tried to attack an invalid entity");
-                         return;
-                     }
--
-+                    PlayerAttackEntityEvent event = new PlayerAttackEntityEvent(this.getPlayer(), entity.getBukkitEntity());
-+                    this.server.getPluginManager().callEvent(event);
-+                    if (event.isCancelled()) {
-+                    	return;
-+                    }
-                     this.player.attack(entity);
- 
-                     // CraftBukkit start
 @@ -1239,15 +1343,12 @@ public class PlayerConnection implements PacketPlayInListener {
                  if (this.player.getHealth() > 0.0F) {
                      return;
@@ -894,16 +783,6 @@ index 01500971..f283fa02 100644
                      this.minecraftServer.warning("Player " + this.player.getName() + " just tried to change non-editable sign");
                      this.sendPacket(new PacketPlayOutUpdateSign(packetplayinupdatesign.c(), packetplayinupdatesign.d(), packetplayinupdatesign.e(), tileentitysign.lines)); // CraftBukkit
                      return;
-@@ -1748,7 +1834,8 @@ public class PlayerConnection implements PacketPlayInListener {
-         if (packetplayinkeepalive.c() == this.h) {
-             int i = (int) (this.d() - this.i);
- 
--            this.player.ping = (this.player.ping * 3 + i) / 4;
-+            this.player.ping = i;
-+            this.player.pingAvg = (this.player.ping * 3 + i) / 4;
-         }
-     }
- 
 @@ -1771,16 +1858,15 @@ public class PlayerConnection implements PacketPlayInListener {
      }
  
